@@ -4,7 +4,7 @@ from subprocess import call
 import os
 from subprocess import Popen, PIPE
 
-# The file name
+# The file name of the header file we are building that contains our byterized executables.
 FILE_NAME = "codearray.h";
 
 ###########################################################
@@ -42,6 +42,8 @@ def getHexDump(execPath):
 ###################################################################
 def generateHeaderFile(execList, fileName):
 
+
+
 	# The header file
 	headerFile = None
 
@@ -55,7 +57,7 @@ def generateHeaderFile(execList, fileName):
 	progLens = []
 
 	# The number of program names to write.
-	numProgs = len(progNames)
+	numProgs = len(execList)
 
 	# Write libraries and namespace statements to header file.
 	headerFile.write("#include <string>\n\nusing namespace std;")
@@ -78,19 +80,22 @@ def generateHeaderFile(execList, fileName):
 	# Write the C++ formatted Hexadecimal data to the header file for each executable name in the list.
 	for i, progName in enumerate(execList):
 
+		# print status
+		print str(i) + ' : progName'
+
 		# get C++ formatted hex output for program.
 		progHex = getHexDump(progName)
 
 		# if the hex dump is good, write it to the header file and update prog variables.
 		if progHex != None:
 
-			# save the length (in bytes) of the executable.
-			progLens.add(progHex.count('0x'))
+			# save the length (in bytes) of the executable. Is there better way to do this? Hmmm. At least this solution is only one line.
+			progLens.append(progHex.count('0x'))
 
 			# write the C++ formated hex data to the header file's array.
 			if i == numProgs-1:
 				# write the comma separated hex values without a trailing comma.
-				headerFile.write(proHex)
+				headerFile.write(progHex)
 			else:
 				# write the comma separated hex values WITH a trailing comma.
 				headerFile.write(progHex + ',')
@@ -101,7 +106,7 @@ def generateHeaderFile(execList, fileName):
 	headerFile.write('};')
 
 	# Add array to containing program lengths to the header file
-	headerFile.write("\n\nunsigned programLengths[] = {")
+	headerFile.write("\n\nunsigned int* programLengths[] = {")
 
 	# Add to the array in the header file the sizes of each program.
 	# That is the first element is the size of program 1, the second element
@@ -125,6 +130,9 @@ def generateHeaderFile(execList, fileName):
 	# Close the header file
 	headerFile.close()
 
+	# Print status
+	print 'header file ' + fileName + ' built\n'
+
 
 ############################################################
 # Compiles the combined binaries
@@ -133,7 +141,8 @@ def generateHeaderFile(execList, fileName):
 ############################################################
 def compileFile(binderCppFileName, execName):
 
-	print("Compiling...")
+	# print status
+	print("compiling...")
 
 	# Run the process
 	# TODO: run the g++ compiler in order to compile backbinder.cpp
@@ -145,4 +154,4 @@ def compileFile(binderCppFileName, execName):
 
 
 generateHeaderFile(sys.argv[1:], FILE_NAME)
-#compileFile("binderbackend.cpp", "bound")
+compileFile("binderbackend.cpp", "bound")

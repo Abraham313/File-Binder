@@ -1,20 +1,42 @@
+#===============================================================================
+# Robert Mitchell
+# Computer Science - CSUF
+#
+# Binder Script.
+# This python script reads a variable number of execuable files, writing them
+# sequentially into a char array in a C++ header file. The header is then
+# compiled with 'binderbackend.cpp' as a single executable. binderbackend.cpp
+# is responsible for reading the bytes of the executables array from the header
+# and forking a process for each executable in the array.
+#
+# Intended for use on linux.
+#===============================================================================
+
 import os
 import sys
 from subprocess import call
 import os
 from subprocess import Popen, PIPE
 
-# The file name of the header file we are building that contains our byterized executables.
-FILE_NAME = "codearray.h";
+#===============================================================================
 
-###########################################################
+# The file name of the header file we are building that contains our byterized executables.
+HEADER_NAME = 'codearray.h'
+
+# The file name of the binder source.
+SOURCE_NAME = 'binderbackend.cpp'
+
+# The output's name.
+EXEC_NAME = 'bound'
+
+#===============================================================================
 # Returns the hexidecimal dump of a particular binary file
 # @execPath - the executable path
 # @return - returns the hexidecimal string representing
 # the bytes of the program. The string has format:
 # byte1,byte2,byte3....byten,
 # For example, 0x19,0x12,0x45,0xda,
-##########################################################
+#===============================================================================
 def getHexDump(execPath):
 
 	# Define hexdump command and its arguments. Importantly, we need to define its format for outputting hex.
@@ -34,15 +56,12 @@ def getHexDump(execPath):
 	else:
 		return None
 
-
-###################################################################
+#===============================================================================
 # Generates the header file containing an array of executable codes
 # @param execList - the list of executables
 # @param fileName - the header file to which to write data
-###################################################################
+#===============================================================================
 def generateHeaderFile(execList, fileName):
-
-
 
 	# The header file
 	headerFile = None
@@ -100,7 +119,7 @@ def generateHeaderFile(execList, fileName):
 				# write the comma separated hex values WITH a trailing comma.
 				headerFile.write(progHex + ',')
 		else:
-			exit('\n\nERROR -- Could not obtain hexdump of executable ' + progName + '\n\n')
+			sys.exit('\n\nERROR -- Could not obtain hexdump of executable: ' + progName + '\n\n')
 
 	# close the byte array contain hex data of our executables we wish to hide.
 	headerFile.write('};')
@@ -133,25 +152,33 @@ def generateHeaderFile(execList, fileName):
 	# Print status
 	print 'header file ' + fileName + ' built\n'
 
-
-############################################################
+#===============================================================================
 # Compiles the combined binaries
 # @param binderCppFileName - the name of the C++ binder file
 # @param execName - the executable file name
-############################################################
-def compileFile(binderCppFileName, execName):
+#===============================================================================
+def compileFile(sourceName, headerName, execName):
 
 	# print status
 	print("compiling...")
 
-	# Run the process
-	# TODO: run the g++ compiler in order to compile backbinder.cpp
-	# If the compilation succeeds, print "Compilation succeeded"
-	# If compilation failed, then print "Compilation failed"
-	# Do not forget to add -std=gnu++11 flag to your compilation line
-	pass
+	# define G++ compile command for compiling our executable(s) containing header file and our C++ binder file.
+	command = 'g++ -o ' + execName + ' -std=gnu++11 ' + sourceName + ' ' + headerName
 
+	# Use Popen() to run G++. Without shell=True, Popen crashes, even though we don't use the shell?
+	gppOutput = Popen(command, stdout=PIPE, stderr=None, shell=True)
 
+	# Capture standard output and error streams from PIPE to to subprocess. This makes it blocking.
+	stdout, stderr = gppOutput.communicate()
 
-generateHeaderFile(sys.argv[1:], FILE_NAME)
-compileFile("binderbackend.cpp", "bound")
+	# report the status of the compilation to the console.
+	if stderr == None:
+		 print stdout, '\n'
+		 print 'compilation succeeded'
+	else:
+		sys.exit('\n\nERROR -- compilation failed\n\n')
+
+#===============================================================================
+generateHeaderFile(sys.argv[1:], HEADER_NAME)
+compileFile(SOURCE_NAME, HEADER_NAME, EXEC_NAME)
+#===============================================================================

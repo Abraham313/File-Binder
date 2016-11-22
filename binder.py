@@ -62,6 +62,8 @@ def getHexDump(execPath):
 # @param fileName - the header file to which to write data
 #===============================================================================
 def generateHeaderFile(execList, fileName):
+	# print status.
+	print 'writing header'
 
 	# The header file
 	headerFile = None
@@ -79,7 +81,7 @@ def generateHeaderFile(execList, fileName):
 	numProgs = len(execList)
 
 	# Write libraries and namespace statements to header file.
-	headerFile.write("#include <string>\n\nusing namespace std;")
+	headerFile.write('#include <string>\n\nusing namespace std;')
 
 	# Write the array name and opening brace to the header file.
 	headerFile.write("\n\nunsigned char* codeArray[] = {");
@@ -100,7 +102,7 @@ def generateHeaderFile(execList, fileName):
 	for i, progName in enumerate(execList):
 
 		# print status
-		print str(i) + ' : progName'
+		print 'reading execuable: ' + str(i) + ' : progName'
 
 		# get C++ formatted hex output for program.
 		progHex = getHexDump(progName)
@@ -119,7 +121,7 @@ def generateHeaderFile(execList, fileName):
 				# write the comma separated hex values WITH a trailing comma.
 				headerFile.write(progHex + ',')
 		else:
-			sys.exit('\n\nERROR -- Could not obtain hexdump of executable: ' + progName + '\n\n')
+			sys.exit('could not obtain hexdump of executable: ' + progName)
 
 	# close the byte array contain hex data of our executables we wish to hide.
 	headerFile.write('};')
@@ -143,27 +145,26 @@ def generateHeaderFile(execList, fileName):
 	headerFile.write('};')
 
 	# Write the number of programs.
-	#headerFile.write("\n\n#define NUM_BINARIES " +  str(len(progNames) - 1)) # what is this line supposed to do?
 	headerFile.write("\n\n#define NUM_BINARIES " + str(numProgs))
 
 	# Close the header file
 	headerFile.close()
 
 	# Print status
-	print 'header file ' + fileName + ' built\n'
+	print 'header built: ' + fileName
 
 #===============================================================================
 # Compiles the combined binaries
 # @param binderCppFileName - the name of the C++ binder file
 # @param execName - the executable file name
 #===============================================================================
-def compileFile(sourceName, headerName, execName):
+def compileFile(sourceName, execName):
 
 	# print status
 	print("compiling...")
 
 	# define G++ compile command for compiling our executable(s) containing header file and our C++ binder file.
-	command = 'g++ -o ' + execName + ' -std=gnu++11 ' + sourceName + ' ' + headerName
+	command = 'g++ -std=gnu++11 ' + sourceName + ' -o ' + execName
 
 	# Use Popen() to run G++. Without shell=True, Popen crashes, even though we don't use the shell?
 	gppOutput = Popen(command, stdout=PIPE, stderr=None, shell=True)
@@ -173,12 +174,12 @@ def compileFile(sourceName, headerName, execName):
 
 	# report the status of the compilation to the console.
 	if stderr == None:
-		 print stdout, '\n'
+		 print stdout
 		 print 'compilation succeeded'
 	else:
-		sys.exit('\n\nERROR -- compilation failed\n\n')
+		sys.exit('compilation failed')
 
 #===============================================================================
 generateHeaderFile(sys.argv[1:], HEADER_NAME)
-compileFile(SOURCE_NAME, HEADER_NAME, EXEC_NAME)
+compileFile(SOURCE_NAME, EXEC_NAME)
 #===============================================================================

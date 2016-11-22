@@ -1,5 +1,5 @@
 #include <string>
-#include "codearray.h"
+#include "codearray.h" // source of our executables. 
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

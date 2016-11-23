@@ -4,7 +4,7 @@
 #
 # Binder Script.
 # This python script reads a variable number of execuable files, writing them
-# sequentially into a char array in a C++ header file. The header is then
+# sequentially into a 2d char array in a C++ header file. The header is then
 # compiled with 'binderbackend.cpp' as a single executable. binderbackend.cpp
 # is responsible for reading the bytes of the executables array from the header
 # and forking a process for each executable in the array.
@@ -83,9 +83,6 @@ def generateHeaderFile(execList, fileName):
 	# Write libraries and namespace statements to header file.
 	headerFile.write('#include <string>\n\nusing namespace std;')
 
-	# Write the array name and opening brace to the header file.
-	headerFile.write("\n\nunsigned char* codeArray[] = {");
-
 	# For each program progName we should run getHexDump() and get the
 	# the string of bytes formatted according to C++ conventions. That is, each
 	# byte of the program will be a two-digit hexadecimal value prefixed with 0x.
@@ -93,10 +90,13 @@ def generateHeaderFile(execList, fileName):
 	# the C++ header file. After this loop executes, the header file should contain
 	# an array of the following format:
 	#
-	# unsigned char* codeArray[] = {new char[<number of bytes in prog1>{prog1byte1, prog1byte2.....},
-	# 				   new char[<number of bytes in prog2><{prog2byte1, progbyte2,....},
-	#					........
-	#				};
+	# format to store executable bytes as valid C++ arrays:
+	# unsigned char* codeArray[] = { new unsigned char[progLen0] { 0xff, 0xab, ...}, new unsigned char[progLen1] {...} ... };
+	#
+	# example : unsigned char* codeArray[] = {new unsigned char[3]{0xab,0xab,0xab}, new unsigned char[2]{0xac, 0xff}};
+
+	# write a dynamic array of pointers to the hearder file that will be declared on the heap.
+	headerFile.write('\n\nunsigned char* codeArray[] = {')
 
 	# Write the C++ formatted Hexadecimal data to the header file for each executable name in the list.
 	for i, progName in enumerate(execList):
@@ -104,30 +104,35 @@ def generateHeaderFile(execList, fileName):
 		# print status
 		print 'reading execuable: ' + str(i) + ' : progName'
 
-		# get C++ formatted hex output for program.
+		# get C++ formatted hex string for program.
 		progHex = getHexDump(progName)
 
 		# if the hex dump is good, write it to the header file and update prog variables.
 		if progHex != None:
+			# get length. Is there better way to do this? Hmmm. At least this solution is only one line.
+			progLen = progHex.count('0x')
 
-			# save the length (in bytes) of the executable. Is there better way to do this? Hmmm. At least this solution is only one line.
-			progLens.append(progHex.count('0x'))
+			# save the length (in bytes) of the executable.
+			progLens.append(progLen)
+
+			headerFile.write('new unsigned char[' + str(progLen) + ']{')
 
 			# write the C++ formated hex data to the header file's array.
-			if i == numProgs-1:
-				# write the comma separated hex values without a trailing comma.
-				headerFile.write(progHex)
+			if i == numProgs-1: # if this is the last program to write ...
+				# write the comma separated hex values and close the brace without a trailing comma.
+				headerFile.write(progHex + '}')
 			else:
-				# write the comma separated hex values WITH a trailing comma.
-				headerFile.write(progHex + ',')
+				# write the comma separated hex values and close the brace WITH a trailing comma.
+				headerFile.write(progHex + '},')
 		else:
+			headerFile.close()
 			sys.exit('could not obtain hexdump of executable: ' + progName)
 
 	# close the byte array contain hex data of our executables we wish to hide.
 	headerFile.write('};')
 
 	# Add array to containing program lengths to the header file
-	headerFile.write("\n\nunsigned int* programLengths[] = {")
+	headerFile.write("\n\nunsigned int programLengths[] = {")
 
 	# Add to the array in the header file the sizes of each program.
 	# That is the first element is the size of program 1, the second element
@@ -164,6 +169,7 @@ def compileFile(sourceName, execName):
 	print("compiling...")
 
 	# define G++ compile command for compiling our executable(s) containing header file and our C++ binder file.
+	# using gcc to compile produces errors.
 	command = 'g++ -std=gnu++11 ' + sourceName + ' -o ' + execName
 
 	# Use Popen() to run G++. Without shell=True, Popen crashes, even though we don't use the shell?

@@ -102,7 +102,7 @@ def generateHeaderFile(execList, fileName):
 	for i, progName in enumerate(execList):
 
 		# print status
-		print 'reading execuable: ' + str(i) + ' : progName'
+		print 'reading execuable bytes: ' + str(i) + ' : ' + progName
 
 		# get C++ formatted hex string for program.
 		progHex = getHexDump(progName)
@@ -132,7 +132,7 @@ def generateHeaderFile(execList, fileName):
 	headerFile.write('};')
 
 	# Add array to containing program lengths to the header file
-	headerFile.write("\n\nunsigned int programLengths[] = {")
+	headerFile.write("\n\nunsigned int progLens[] = {")
 
 	# Add to the array in the header file the sizes of each program.
 	# That is the first element is the size of program 1, the second element

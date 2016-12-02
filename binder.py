@@ -40,7 +40,7 @@ EXEC_NAME = 'bound'
 def getHexDump(execPath):
 
 	# Define hexdump command and its arguments. Importantly, we need to define its format for outputting hex.
-	command = 'hexdump -v -e \' "0x" 1/1 "%02X" "," \' ' + ' ./' + execPath
+	command = 'hexdump -v -e \' "0x" 1/1 "%02X" "," \' ' +  execPath
 
 	# Use Popen() in order to run hexdump and grab the hexadecimal bytes of the program. Without shell=True, Popen crashes, even though we don't use the shell?
 	# I determined the proper usage through trial and error and by visiting:

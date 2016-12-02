@@ -49,7 +49,7 @@ int main()
 		if(childProcId == 0)
 		{
 				// turn the child into an executable. send the execute function the path and name of the executable file we made.
-				if( -1 == execlp(progName, NULL) )
+				if( -1 == execlp(progName, progName,  NULL) )
 				{
 						printf("Error Executing: %s", progName);
 				}

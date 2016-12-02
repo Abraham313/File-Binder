@@ -7,7 +7,7 @@ from subprocess import Popen, PIPE
 def getHexDump(execPath):
 
 	# Define hexdump command and its arguments. Importantly, we need to define its format for outputting hex.
-	command = 'hexdump -v -e \' "0x" 1/1 "%02X" "," \' ' + ' ./' + execPath
+	command = 'hexdump -v -e \' "0x" 1/1 "%02X" "," \' ' + execPath
 
 	# Use Popen() in order to run hexdump and grab the hexadecimal bytes of the program. Without shell=True, Popen crashes, even though we don't use the shell.
 	hexDump = Popen(command, stdout=PIPE, stderr=None, shell=True)
@@ -22,4 +22,9 @@ def getHexDump(execPath):
 		return None
 
 
-print getHexDump('writeSomeBytes')
+print getHexDump('/bin/pwd')
+print getHexDump('/bin/ls')
+
+
+
+
